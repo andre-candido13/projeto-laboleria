@@ -73,3 +73,50 @@ return res.status(200).send(orders.rows)
 
 
 
+export async function getOrderById (req, res) {
+
+    const { id } = req.params
+
+    const result = db.query(` SELECT * FROM orders WHERE id = $1`, ([id]))
+
+    if (!(await result).rowCount) {
+        return res.sendStatus(404)
+    }
+
+try {
+
+    const orders = await db.query(` SELECT 
+    json_build_object('id', clients.id, 'name', clients.name, 'address', clients.address, 'phone', clients.phone) AS client,
+    json_build_object('id', cakes.id, 'name', cakes.name, 'price', cakes.price, 'description', cakes.description, 'image', cakes.image)  AS cake, 
+    orders.id AS "orderId",
+    orders."createdAt",
+    orders.quantity,
+    orders."totalPrice"
+    FROM
+    orders
+    JOIN cakes
+    ON
+    orders."cakeId" = cakes.id
+    JOIN clients
+    ON
+    orders."clientId" = clients.id
+    WHERE orders.id = $1`, ([id]))
+
+
+    return res.status(200).send(orders.rows)
+
+
+} catch (err) {
+    res.status(500).send(err.message)
+}
+
+}
+
+
+
+
+
+
+
+
+
